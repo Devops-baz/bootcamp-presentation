@@ -111,3 +111,81 @@ spec:
     - secretRef:
         name: test-secret
 ```
+
+
+sudo mv  /etc/kubernetes/manifests/kube-scheduler.yaml .
+
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: nginx
+  name: nginx
+spec:
+  containers:
+  - image: nginx
+    name: nginx
+EOF
+
+Result: It will be in pending state as kube-scheduler is not present in kube-system namespace.
+-------
+
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: nginx1
+  name: nginx1
+spec:
+  nodeName: kworker1
+  containers:
+  - image: nginx
+    name: nginx1
+EOF
+
+Result: It will be in running state
+-------
+
+sudo mv  kube-scheduler.yaml /etc/kubernetes/manifests/
+
+-------
+
+login on any worker node
+
+cat /var/lib/kubelet/config.yaml | grep stat
+cd /etc/kubernetes/manifests
+nano pod.yaml (Add following lines)
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp-pod
+  labels:
+    app: myapp
+    tier: front-end
+spec:
+   containers:
+   - name: nginx-container
+     image: nginx
+     resources:
+       requests:
+         memory: 50Mi
+         cpu: 0.1
+       limits:
+         memory: 300Mi
+         cpu: 1
+
+Save & exit
+
+
+Note:
+=====
+
+* kubelet automatically create a static pod.
+* static pod can only be deleted by removing the file.
+* To view static pod by using docker ps command.
+* kube-apiserver can list the static pod as kubelet create a mirror of this pod on kube-apiserver.
+* While creating static pod, hostname append with static pod name.
+* To delete static Pod, just delete file.
